@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Minish Cap</title>
+  <script src="gba.js"></script>
+  <script src="loader.js"></script>
+  <style>
+    body { background: black; text-align: center; color: white; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>The Legend of Zelda: The Minish Cap</h1>
+  <canvas id="screen" width="240" height="160"></canvas>
+  <script>
+    var gba = new GameBoyAdvance();
+    gba.setCanvas(document.getElementById("screen"));
+    gba.loadRomFromFile("roms/the-minish-cap.gba", function() {
+      gba.runStable();
+    });
+  </script>
+</body>
+</html>

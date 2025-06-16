@@ -1,24 +1,43 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>The Minish Cap</title>
- <script src="js/core.js"></script>
-  <script src="loader.js"></script>
-  <style>
-    body { background: black; text-align: center; color: white; }
-    canvas { margin-top: 20px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>The Legend of Zelda: The Minish Cap</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            border: 2px solid white;
+        }
+    </style>
 </head>
 <body>
-  <h1>The Legend of Zelda: The Minish Cap</h1>
-  <canvas id="screen" width="240" height="160"></canvas>
-  <script>
-    var gba = new GameBoyAdvance();
-    gba.setCanvas(document.getElementById("screen"));
-    gba.loadRomFromFile("the-minish-cap.gba", function() {
-      gba.runStable();
-    });
-  </script>
+    <h1>The Legend of Zelda: The Minish Cap</h1>
+    <canvas id="gba-canvas" width="240" height="160"></canvas>
+    <script src="core.js"></script>
+    <script>
+        const canvas = document.getElementById("gba-canvas");
+        const gba = new GameBoyAdvance();
+        gba.setCanvas(canvas);
+
+        const romRequest = new XMLHttpRequest();
+        romRequest.open("GET", "zelda.gba", true);
+        romRequest.responseType = "arraybuffer";
+
+        romRequest.onload = function () {
+            const rom = new Uint8Array(romRequest.response);
+            gba.loadROMFromFile(rom);
+            gba.runStable();
+        };
+        romRequest.send();
+    </script>
 </body>
 </html>

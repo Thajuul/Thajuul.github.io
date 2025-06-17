@@ -1,27 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GBA Emulator</title>
+  <meta charset="UTF-8">
+  <title>Flappy Bird</title>
+  <style>
+    canvas {
+      background: #70c5ce;
+      display: block;
+      margin: 0 auto;
+    }
+    body {
+      text-align: center;
+      font-family: sans-serif;
+    }
+  </style>
 </head>
 <body>
-  <h1>Play GBA Game</h1>
-  <input type="file" id="upload" />
-  <script src="gba.js"></script>
+  <h1>Flappy Bird</h1>
+  <canvas id="canvas" width="320" height="480"></canvas>
+
   <script>
-    const upload = document.getElementById('upload');
-    upload.addEventListener('change', function () {
-      const file = this.files[0];
-      const reader = new FileReader();
-      reader.onload = function () {
-        const rom = reader.result;
-        const gba = new GameBoyAdvance();
-        gba.setCanvas(document.createElement("canvas"));
-        gba.loadRomFromByteArray(new Uint8Array(rom));
-        gba.runStable();
-        document.body.appendChild(gba.canvas);
-      };
-      reader.readAsArrayBuffer(file);
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let frames = 0;
+    const DEGREE = Math.PI / 180;
+
+    // Load images
+    const sprite = new Image();
+    sprite.src = "https://openai-chat-assets.s3.amazonaws.com/flappy-bird/sprite.png";
+
+    // Game state
+    const state = {
+      current: 0,
+      getReady: 0,
+      game: 1,
+      over: 2
+    };
+
+    // Control the game
+    canvas.addEventListener("click", function () {
+      switch (state.current) {
+        case state.getReady:
+          state.current = state.game;
+          break;
+        case state.game:
+          bird.flap();
+          break;
+        case state.over:
+          pipes.reset();
+          bird.reset();
+          score.reset();
+          state.current = state.getReady;
+          break;
+      }
     });
-  </script>
-</body>
-</html>
+
+    // Bird
+    const bird = {
+      x: 50,
+      y: 150,
+      w: 34,
+      h: 26,
+
+      radius: 12,
+      frame: 0,
+
+      gravity: 0.25,
+      jump: 4.6,
+      speed: 0,
+      rotation: 0,
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+      },
+
+      flap() {
+        this.speed = -this.jump;
+      },
+
+      update() {
+        if (state.current === state.getReady) {
+          this.y = 150;
+          this.rotation = 0 * DEGREE;
+        } else {
+          this.speed += this.gravity;
+          this.y += this.speed;
+
+          if (this.y + this.h / 2 >= canvas.height - 80) {
+            this.y = canvas.height - 80 - this.h / 2;
+            if (state.current === state.game) {
+              state.current = state.over;
+            }
+          }
+
+          if (this.speed >= this.jump) {
+            this.rotation = 90 * DEGREE;
+          } else {
+            this.rotation = -25 * DEGREE;
+          }
+        }
+      },
+
+      reset() {
+        this.speed = 0;
+        this.y = 150;
+      }
+    };
+
+    // Pipes
+    const pipes = {
+      position: [],
+      w: 50,
+      h: 400,
+      gap: 100,
+      maxYPos: -150,
+      dx: 2,
+
+      draw() {
+        ctx.fillStyle = "#228B22";
+        for (let i = 0; i < this.position.length; i++) {
+          let p = this.position[i];
+          ctx.fillRect(p.x, p.y, this.w, this.h);
+          ctx.fillRect(p.x, p.y + this.h + this.gap, this.w, this.h);
+        }
+      },
+
+      update() {
+        if (state.current !== state.game) return;
+
+        if (frames % 100 === 0) {
+          this.position.push({
+            x: canvas.width,
+            y: this.maxYPos * (Math.random() + 1)
+          });
+        }
+
+        for (let i = 0; i < this.position.length; i++) {
+          let p = this.position[i];
+
+          p.x -= this.dx;
+
+          // Collision
+          let b = bird;
+          if (
+            b.x + b.radius > p.x &&
+            b.x - b.radius < p.x + this.w &&
+            (b.y - b.radius < p.y + this.h ||
+              b.y + b.radius > p.y + this.h + this.gap)
+          ) {
+            state.current = state.over;
+          }
+
+          // Remove off-screen pipes
+          if (p.x + this.w <= 0) {
+            this.position.shift();
+            score.value += 1;
+          }
+        }
+      },
+
+      reset() {
+        this.position = [];
+      }
+    };
+
+    // Score
+    const score = {
+      value: 0,
+      dr
